@@ -77,13 +77,9 @@ const getTokens = (code, state, host) =>
       // exp - expiry time for the id token (seconds since epoch in UTC)
       // iat - time that the JWT was issued (seconds since epoch in UTC)
 
-      return new Promise(resolve => {
-        const payload = {
-          // This was commented because Cognito times out in under a second
-          // and generating the userInfo takes too long.
-          // It means the ID token is empty except for metadata.
-          //  ...userInfo,
-        };
+      return new Promise(async (resolve) => {
+        // TODO error handling
+        const payload = await getUserInfo(githubToken.access_token);
 
         const idToken = crypto.makeIdToken(payload, host);
         const tokenResponse = {

@@ -20,20 +20,20 @@ describe('openid domain layer', () => {
     github.mockImplementation(() => githubMock);
   });
 
-  describe('userinfo function', () => {
-    const mockEmailsWithPrimary = withPrimary => {
-      githubMock.getUserEmails.mockImplementation(() =>
-        Promise.resolve([
-          {
-            primary: false,
-            email: 'not-this-email@example.com',
-            verified: false
-          },
-          { primary: withPrimary, email: 'email@example.com', verified: true }
-        ])
-      );
-    };
+  const mockEmailsWithPrimary = withPrimary => {
+    githubMock.getUserEmails.mockImplementation(() =>
+      Promise.resolve([
+        {
+          primary: false,
+          email: 'not-this-email@example.com',
+          verified: false
+        },
+        { primary: withPrimary, email: 'email@example.com', verified: true }
+      ])
+    );
+  };
 
+  describe('userinfo function', () => {
     describe('with a good token', () => {
       describe('with complete user details', () => {
         beforeEach(() => {
@@ -100,6 +100,18 @@ describe('openid domain layer', () => {
             scope: 'scope1,scope2'
           })
         );
+        githubMock.getUserDetails.mockImplementation(() =>
+          Promise.resolve({
+            sub: 'Some sub',
+            name: 'some name',
+            login: 'username',
+            html_url: 'some profile',
+            avatar_url: 'picture.jpg',
+            blog: 'website',
+            updated_at: '2008-01-14T04:33:35Z'
+          })
+        );
+        mockEmailsWithPrimary(true);
         crypto.makeIdToken.mockImplementation(() => 'ENCODED TOKEN');
       });
 
@@ -124,7 +136,7 @@ describe('openid domain layer', () => {
         );
       });
       it('fails', () =>
-        expect(openid.getUserInfo('bad token', 'two', 'three')).to.eventually.be
+        expect(openid.getTokens()).to.eventually.be
           .rejected);
     });
   });
