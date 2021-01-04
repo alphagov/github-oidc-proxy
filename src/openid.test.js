@@ -12,6 +12,7 @@ describe('openid domain layer', () => {
   const githubMock = {
     getUserEmails: jest.fn(),
     getUserDetails: jest.fn(),
+    getUserTeams: jest.fn(),
     getToken: jest.fn(),
     getAuthorizeUrl: jest.fn()
   };
@@ -48,6 +49,9 @@ describe('openid domain layer', () => {
               updated_at: '2008-01-14T04:33:35Z'
             })
           );
+          githubMock.getUserTeams.mockImplementation(() =>
+            Promise.resolve([{id: 4321, name:'Team C'}, {id: 5432, name:'Team D'}])
+          );
         });
         describe('with a primary email', () => {
           beforeEach(() => {
@@ -64,7 +68,8 @@ describe('openid domain layer', () => {
               profile: 'some profile',
               sub: 'undefined',
               updated_at: 1200285215,
-              website: 'website'
+              website: 'website',
+              teams: [4321, 5432]
             });
           });
         });
@@ -80,6 +85,9 @@ describe('openid domain layer', () => {
     describe('with a bad token', () => {
       beforeEach(() => {
         githubMock.getUserDetails.mockImplementation(() =>
+          Promise.reject(new Error('Bad token'))
+        );
+        githubMock.getUserTeams.mockImplementation(() =>
           Promise.reject(new Error('Bad token'))
         );
         githubMock.getUserEmails.mockImplementation(() =>
@@ -110,6 +118,9 @@ describe('openid domain layer', () => {
             blog: 'website',
             updated_at: '2008-01-14T04:33:35Z'
           })
+        );
+        githubMock.getUserTeams.mockImplementation(() =>
+          Promise.resolve([{id: 4321, name:'Team C'}, {id: 5432, name:'Team D'}])
         );
         mockEmailsWithPrimary(true);
         crypto.makeIdToken.mockImplementation(() => 'ENCODED TOKEN');
@@ -178,7 +189,8 @@ describe('openid domain layer', () => {
             'email_verified',
             'updated_at',
             'iss',
-            'aud'
+            'aud',
+            'teams'
           ],
           display_values_supported: ['page', 'popup'],
           id_token_signing_alg_values_supported: ['RS256'],
@@ -191,7 +203,7 @@ describe('openid domain layer', () => {
             'id_token',
             'token id_token'
           ],
-          scopes_supported: ['openid', 'read:user', 'user:email'],
+          scopes_supported: ['openid', 'read:user', 'user:email', 'read:org'],
           subject_types_supported: ['public'],
           token_endpoint: 'https://not-a-real-host.com/token',
           token_endpoint_auth_methods_supported: [

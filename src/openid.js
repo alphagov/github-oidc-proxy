@@ -44,6 +44,16 @@ const getUserInfo = accessToken =>
         };
         logger.debug('Resolved claims: %j', claims, {});
         return claims;
+      }),
+   github()
+      .getUserTeams(accessToken)
+      .then(userTeams => {
+        logger.debug('Fetched user teams: %j', userTeams, {});
+        const claims = {
+          teams: userTeams.map(({id}) => id)
+        };
+        logger.debug('Resolved claims: %j', claims, {});
+        return claims;
       })
   ]).then(claims => {
     const mergedClaims = claims.reduce(
@@ -108,7 +118,7 @@ const getConfigFor = host => ({
   // end_session_endpoint: 'https://server.example.com/connect/end_session',
   jwks_uri: `https://${host}/.well-known/jwks.json`,
   // registration_endpoint: 'https://server.example.com/connect/register',
-  scopes_supported: ['openid', 'read:user', 'user:email'],
+  scopes_supported: ['openid', 'read:user', 'user:email', 'read:org'],
   response_types_supported: [
     'code',
     'code id_token',
@@ -132,7 +142,8 @@ const getConfigFor = host => ({
     'email_verified',
     'updated_at',
     'iss',
-    'aud'
+    'aud',
+    'teams'
   ]
 });
 
