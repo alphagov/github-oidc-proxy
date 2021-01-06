@@ -333,10 +333,11 @@ describe('With an increased jasmine timeout', () => {
               'client_id',
               'scope',
               'state',
-              'response_type'
+              'response_type',
+              'redirect_uri'
             )
           ).to.equal(
-            `${PACT_BASE_URL}/login/oauth/authorize?client_id=client_id&scope=scope&state=state&response_type=response_type`
+            `${PACT_BASE_URL}/login/oauth/authorize?client_id=client_id&scope=scope&state=state&response_type=response_type&redirect_uri=redirect_uri`
           );
         });
       });

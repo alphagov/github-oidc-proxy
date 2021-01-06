@@ -6,13 +6,15 @@ module.exports.handler = (event, context, callback) => {
     client_id,
     scope,
     state,
-    response_type
+    response_type,
+    redirect_uri
   } = event.queryStringParameters;
 
   controllers(responder(callback)).authorize(
     client_id,
     scope,
     state,
-    response_type
+    response_type,
+    redirect_uri
   );
 };

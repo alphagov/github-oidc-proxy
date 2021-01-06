@@ -2,12 +2,13 @@ const logger = require('./logger');
 const openid = require('../openid');
 
 module.exports = respond => ({
-  authorize: (client_id, scope, state, response_type) => {
+  authorize: (client_id, scope, state, response_type, redirect_uri) => {
     const authorizeUrl = openid.getAuthorizeUrl(
       client_id,
       scope,
       state,
-      response_type
+      response_type,
+      redirect_uri
     );
     logger.info('Redirecting to authorizeUrl');
     logger.debug('Authorize Url is: %s', authorizeUrl, {});
