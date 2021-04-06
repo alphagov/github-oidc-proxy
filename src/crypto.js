@@ -22,7 +22,7 @@ module.exports = {
     };
     logger.debug('Signing payload %j', enrichedPayload, {});
     return jwt.sign(enrichedPayload, cert, {
-      expiresIn: '1h',
+      expiresIn: '10m',
       algorithm: 'RS256',
       keyid: KEY_ID
     });
