@@ -50,7 +50,17 @@ const getUserInfo = accessToken =>
       .then(userTeams => {
         logger.debug('Fetched user teams: %j', userTeams, {});
         const claims = {
-          teams: userTeams.map(({id}) => id)
+          'https://aws.amazon.com/tags': {
+            'principal_tags': userTeams.map(({id}) => id).reduce((obj, id) => {
+              // why prefix keys with `t`? some minimal namespacing in case we need
+              // to cram any other information into this map down the line and also
+              // will prevent any systems interpreting the key as an integer and doing
+              // funny things with leading zeros etc.
+              // eslint-disable-next-line no-param-reassign
+              obj[`t${id}`] = ["t"];  // `t` for "true" as we can only have str values
+              return obj;
+            } , {})
+          }
         };
         logger.debug('Resolved claims: %j', claims, {});
         return claims;
@@ -143,7 +153,7 @@ const getConfigFor = host => ({
     'updated_at',
     'iss',
     'aud',
-    'teams'
+    'https://aws.amazon.com/tags'
   ]
 });
 

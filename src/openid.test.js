@@ -69,7 +69,9 @@ describe('openid domain layer', () => {
               sub: 'undefined',
               updated_at: 1200285215,
               website: 'website',
-              teams: [4321, 5432]
+              "https://aws.amazon.com/tags": {
+                "principal_tags": {"t4321": ["t"], "t5432": ["t"]}
+              }
             });
           });
         });
@@ -190,7 +192,7 @@ describe('openid domain layer', () => {
             'updated_at',
             'iss',
             'aud',
-            'teams'
+            'https://aws.amazon.com/tags'
           ],
           display_values_supported: ['page', 'popup'],
           id_token_signing_alg_values_supported: ['RS256'],
