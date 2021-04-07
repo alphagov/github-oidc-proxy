@@ -1,0 +1,152 @@
+display:
+  background_image: ((background-image))
+
+resources:
+
+- name: github-oidc-proxy-git
+  icon: github
+  type: git
+  source:
+    branch: ((github-oidc-proxy-git-branch))
+    uri: git@github.com:alphagov/github-oidc-proxy.git
+    private_key: ((github-oidc-proxy-git-ssh-private-key))
+
+jobs:
+
+- name: update-pipeline
+  serial: true
+  plan:
+  - get: github-oidc-proxy-git
+    trigger: true
+  - set_pipeline: self
+    file: github-oidc-proxy-git/ci/deploy.yml
+    vars:
+      github-oidc-proxy-git-branch: ((github-oidc-proxy-git-branch))
+      background-image: ((background-image))
+      meta-suffix: ((meta-suffix))
+
+- name: deploy-staging
+  serial: true
+  plan:
+  - get: github-oidc-proxy-git
+    trigger: true
+    passed: [update-pipeline]
+  - task: build-dist
+    params:
+      JWKS_PUBLIC_KEY: ((staging-jwks-public-key))
+      JWKS_PRIVATE_KEY: ((staging-jwks-private-key))
+    config:
+      platform: linux
+      image_resource:
+        type: registry-image
+        source:
+          repository: node
+          tag: 10-alpine
+      inputs:
+      - name: github-oidc-proxy-git
+      outputs:
+      - name: github-oidc-proxy-git
+      run:
+        dir: github-oidc-proxy-git
+        path: /bin/ash
+        args:
+          - -e
+          - -c
+          - |
+            echo "$JWKS_PRIVATE_KEY" > jwtRS256.key
+            echo "$JWKS_PUBLIC_KEY" > jwtRS256.key.pub
+
+            npm install
+            npm run build
+  - task: apply-terraform
+    params:
+      TF_VAR_GITHUB_CLIENT_ID: ((staging-github-client-id))
+      TF_VAR_GITHUB_CLIENT_SECRET: ((staging-github-client-secret))
+      TERRAFORM_STATE_BUCKET: ((staging-terraform-state-bucket))
+      TERRAFORM_STATE_REGION: ((staging-terraform-state-region))
+      ENVIRONMENT_NAME: staging((meta-suffix))
+      DEPLOYER_ROLE_ARN: ((staging-deployer-role-arn))
+    config:
+      platform: linux
+      image_resource:
+        type: registry-image
+        source:
+          repository: governmentpaas/terraform
+          tag: sha256:4db24e98d6585ba2466c47f502f346b843db17b83d49303ce0cfb93c54a5a11f  # terraform 0.14.4
+      inputs:
+      - name: github-oidc-proxy-git
+      outputs:
+      - name: terraform-outputs
+      params:
+        TERRAFORM_STATE_BUCKET:
+        TERRAFORM_STATE_REGION:
+        ENVIRONMENT_NAME:
+        DEPLOYER_ROLE_ARN:
+      run:
+        dir: github-oidc-proxy-git/terraform
+        path: /bin/ash
+        args:
+          - -e
+          - -c
+          - |
+            export TF_VAR_deployer_role_arn="${DEPLOYER_ROLE_ARN}"
+            export TF_VAR_environment_name="${ENVIRONMENT_NAME}"
+
+            terraform init -input=false \
+              -backend-config "bucket=${TERRAFORM_STATE_BUCKET}" \
+              -backend-config "key=github-oidc-proxy-${ENVIRONMENT_NAME}.tfstate" \
+              -backend-config "region=${TERRAFORM_STATE_REGION}" \
+              -backend-config "role_arn=${DEPLOYER_ROLE_ARN}" \
+
+            terraform plan -out terraform.plan -input=false
+            terraform apply -auto-approve -input=false terraform.plan
+            terraform output -json > ../../terraform-outputs/outputs.json
+  - task: smoke-test
+    params:
+      GITHUB_CLIENT_ID: ((staging-github-client-id))
+    config:
+      platform: linux
+      image_resource:
+        type: registry-image
+        source:
+          repository: govsvc/task-toolbox
+          tag: latest
+      inputs:
+      - name: github-oidc-proxy-git
+      - name: terraform-outputs
+      params:
+        GITHUB_CLIENT_ID:
+      run:
+        path: /bin/ash
+        args:
+          - -e
+          - -c
+          - |
+            test_for_substring () {
+              grep -F "$1" "$2" > /dev/null && echo "Found substring $1"
+            }
+
+            export API_BASE_URL=$(jq -r '.api_base_url.value' terraform-outputs/outputs.json)
+            export OAUTH_STATE=$RANDOM$RANDOM
+
+            export TARGET_URL="$API_BASE_URL/authorize?client_id=$GITHUB_CLIENT_ID&state=$OAUTH_STATE&redirect_uri=http://localhost:1234/"
+            echo "Probing $TARGET_URL"
+            curl $TARGET_URL -f -w '%{redirect_url}' > redirect_url
+
+            echo "redirect_url: $(cat redirect_url)"
+
+            test_for_substring 'github.com' redirect_url
+            test_for_substring "state=$OAUTH_STATE" redirect_url
+            test_for_substring "client_id=$GITHUB_CLIENT_ID" redirect_url
+
+            export TARGET_URL="$API_BASE_URL/.well-known/jwks.json"
+            echo "Probing $TARGET_URL"
+            curl $TARGET_URL -f > jwks.json
+            jq -e '(.keys | length) >= 1' jwks.json > /dev/null \
+              && echo "Found populated 'keys' array"
+
+            export TARGET_URL="$API_BASE_URL/.well-known/openid-configuration"
+            echo "Probing $TARGET_URL"
+            curl $TARGET_URL -f > openid-configuration.json
+            jq -e '.issuer == env.API_BASE_URL' openid-configuration.json > /dev/null \
+              && echo "Found correct 'issuer'"
