@@ -44,6 +44,26 @@ const getUserInfo = accessToken =>
         };
         logger.debug('Resolved claims: %j', claims, {});
         return claims;
+      }),
+   github()
+      .getUserTeams(accessToken)
+      .then(userTeams => {
+        logger.debug('Fetched user teams: %j', userTeams, {});
+        const claims = {
+          'https://aws.amazon.com/tags': {
+            'principal_tags': userTeams.map(({id}) => id).reduce((obj, id) => {
+              // why prefix keys with `t`? some minimal namespacing in case we need
+              // to cram any other information into this map down the line and also
+              // will prevent any systems interpreting the key as an integer and doing
+              // funny things with leading zeros etc.
+              // eslint-disable-next-line no-param-reassign
+              obj[`t${id}`] = ["t"];  // `t` for "true" as we can only have str values
+              return obj;
+            } , {})
+          }
+        };
+        logger.debug('Resolved claims: %j', claims, {});
+        return claims;
       })
   ]).then(claims => {
     const mergedClaims = claims.reduce(
@@ -54,8 +74,8 @@ const getUserInfo = accessToken =>
     return mergedClaims;
   });
 
-const getAuthorizeUrl = (client_id, scope, state, response_type) =>
-  github().getAuthorizeUrl(client_id, scope, state, response_type);
+const getAuthorizeUrl = (client_id, scope, state, response_type, redirect_uri) =>
+  github().getAuthorizeUrl(client_id, scope, state, response_type, redirect_uri);
 
 const getTokens = (code, state, host) =>
   github()
@@ -77,13 +97,9 @@ const getTokens = (code, state, host) =>
       // exp - expiry time for the id token (seconds since epoch in UTC)
       // iat - time that the JWT was issued (seconds since epoch in UTC)
 
-      return new Promise(resolve => {
-        const payload = {
-          // This was commented because Cognito times out in under a second
-          // and generating the userInfo takes too long.
-          // It means the ID token is empty except for metadata.
-          //  ...userInfo,
-        };
+      return new Promise(async (resolve) => {
+        // TODO error handling
+        const payload = await getUserInfo(githubToken.access_token);
 
         const idToken = crypto.makeIdToken(payload, host);
         const tokenResponse = {
@@ -112,7 +128,7 @@ const getConfigFor = host => ({
   // end_session_endpoint: 'https://server.example.com/connect/end_session',
   jwks_uri: `https://${host}/.well-known/jwks.json`,
   // registration_endpoint: 'https://server.example.com/connect/register',
-  scopes_supported: ['openid', 'read:user', 'user:email'],
+  scopes_supported: ['openid', 'read:user', 'user:email', 'read:org'],
   response_types_supported: [
     'code',
     'code id_token',
@@ -136,7 +152,8 @@ const getConfigFor = host => ({
     'email_verified',
     'updated_at',
     'iss',
-    'aud'
+    'aud',
+    'https://aws.amazon.com/tags'
   ]
 });
 

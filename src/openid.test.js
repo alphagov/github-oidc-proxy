@@ -12,6 +12,7 @@ describe('openid domain layer', () => {
   const githubMock = {
     getUserEmails: jest.fn(),
     getUserDetails: jest.fn(),
+    getUserTeams: jest.fn(),
     getToken: jest.fn(),
     getAuthorizeUrl: jest.fn()
   };
@@ -20,20 +21,20 @@ describe('openid domain layer', () => {
     github.mockImplementation(() => githubMock);
   });
 
-  describe('userinfo function', () => {
-    const mockEmailsWithPrimary = withPrimary => {
-      githubMock.getUserEmails.mockImplementation(() =>
-        Promise.resolve([
-          {
-            primary: false,
-            email: 'not-this-email@example.com',
-            verified: false
-          },
-          { primary: withPrimary, email: 'email@example.com', verified: true }
-        ])
-      );
-    };
+  const mockEmailsWithPrimary = withPrimary => {
+    githubMock.getUserEmails.mockImplementation(() =>
+      Promise.resolve([
+        {
+          primary: false,
+          email: 'not-this-email@example.com',
+          verified: false
+        },
+        { primary: withPrimary, email: 'email@example.com', verified: true }
+      ])
+    );
+  };
 
+  describe('userinfo function', () => {
     describe('with a good token', () => {
       describe('with complete user details', () => {
         beforeEach(() => {
@@ -47,6 +48,9 @@ describe('openid domain layer', () => {
               blog: 'website',
               updated_at: '2008-01-14T04:33:35Z'
             })
+          );
+          githubMock.getUserTeams.mockImplementation(() =>
+            Promise.resolve([{id: 4321, name:'Team C'}, {id: 5432, name:'Team D'}])
           );
         });
         describe('with a primary email', () => {
@@ -64,7 +68,10 @@ describe('openid domain layer', () => {
               profile: 'some profile',
               sub: 'undefined',
               updated_at: 1200285215,
-              website: 'website'
+              website: 'website',
+              "https://aws.amazon.com/tags": {
+                "principal_tags": {"t4321": ["t"], "t5432": ["t"]}
+              }
             });
           });
         });
@@ -80,6 +87,9 @@ describe('openid domain layer', () => {
     describe('with a bad token', () => {
       beforeEach(() => {
         githubMock.getUserDetails.mockImplementation(() =>
+          Promise.reject(new Error('Bad token'))
+        );
+        githubMock.getUserTeams.mockImplementation(() =>
           Promise.reject(new Error('Bad token'))
         );
         githubMock.getUserEmails.mockImplementation(() =>
@@ -100,6 +110,21 @@ describe('openid domain layer', () => {
             scope: 'scope1,scope2'
           })
         );
+        githubMock.getUserDetails.mockImplementation(() =>
+          Promise.resolve({
+            sub: 'Some sub',
+            name: 'some name',
+            login: 'username',
+            html_url: 'some profile',
+            avatar_url: 'picture.jpg',
+            blog: 'website',
+            updated_at: '2008-01-14T04:33:35Z'
+          })
+        );
+        githubMock.getUserTeams.mockImplementation(() =>
+          Promise.resolve([{id: 4321, name:'Team C'}, {id: 5432, name:'Team D'}])
+        );
+        mockEmailsWithPrimary(true);
         crypto.makeIdToken.mockImplementation(() => 'ENCODED TOKEN');
       });
 
@@ -124,7 +149,7 @@ describe('openid domain layer', () => {
         );
       });
       it('fails', () =>
-        expect(openid.getUserInfo('bad token', 'two', 'three')).to.eventually.be
+        expect(openid.getTokens()).to.eventually.be
           .rejected);
     });
   });
@@ -166,7 +191,8 @@ describe('openid domain layer', () => {
             'email_verified',
             'updated_at',
             'iss',
-            'aud'
+            'aud',
+            'https://aws.amazon.com/tags'
           ],
           display_values_supported: ['page', 'popup'],
           id_token_signing_alg_values_supported: ['RS256'],
@@ -179,7 +205,7 @@ describe('openid domain layer', () => {
             'id_token',
             'token id_token'
           ],
-          scopes_supported: ['openid', 'read:user', 'user:email'],
+          scopes_supported: ['openid', 'read:user', 'user:email', 'read:org'],
           subject_types_supported: ['public'],
           token_endpoint: 'https://not-a-real-host.com/token',
           token_endpoint_auth_methods_supported: [

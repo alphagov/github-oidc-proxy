@@ -19,7 +19,7 @@ module.exports = {
         req.query.client_id
       }&scope=${req.query.scope}&state=${req.query.state}&response_type=${
         req.query.response_type
-      }`
+      }&redirect_uri=${req.query.redirect_uri}`
     ),
   openIdConfiguration: (req, res) => {
     controllers(responder(res)).openIdConfiguration(
