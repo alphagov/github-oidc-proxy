@@ -40,6 +40,11 @@ jobs:
     params:
       TF_VAR_GITHUB_CLIENT_ID: ((staging-github-client-id))
       TF_VAR_GITHUB_CLIENT_SECRET: ((staging-github-client-secret))
+      TF_VAR_domain_root_zone_tfstate_s3_region: ((staging-domain-root-zone-tfstate-s3-region))
+      TF_VAR_domain_root_zone_tfstate_s3_bucket: ((staging-domain-root-zone-tfstate-s3-bucket))
+      TF_VAR_domain_root_zone_tfstate_s3_key: ((staging-domain-root-zone-tfstate-s3-key))
+      TF_VAR_domain_root_zone_tfstate_id_output_name: ((staging-domain-root-zone-tfstate-id-output-name))
+      TF_VAR_domain_subdomain: ((staging-domain-subdomain))
       TERRAFORM_STATE_BUCKET: ((staging-terraform-state-bucket))
       TERRAFORM_STATE_REGION: ((staging-terraform-state-region))
       ENVIRONMENT_NAME: staging((meta-suffix))
@@ -65,6 +70,11 @@ jobs:
     params:
       TF_VAR_GITHUB_CLIENT_ID: ((production-github-client-id))
       TF_VAR_GITHUB_CLIENT_SECRET: ((production-github-client-secret))
+      TF_VAR_domain_root_zone_tfstate_s3_region: ((production-domain-root-zone-tfstate-s3-region))
+      TF_VAR_domain_root_zone_tfstate_s3_bucket: ((production-domain-root-zone-tfstate-s3-bucket))
+      TF_VAR_domain_root_zone_tfstate_s3_key: ((production-domain-root-zone-tfstate-s3-key))
+      TF_VAR_domain_root_zone_tfstate_id_output_name: ((production-domain-root-zone-tfstate-id-output-name))
+      TF_VAR_domain_subdomain: ((production-domain-subdomain))
       TERRAFORM_STATE_BUCKET: ((production-terraform-state-bucket))
       TERRAFORM_STATE_REGION: ((production-terraform-state-region))
       ENVIRONMENT_NAME: production((meta-suffix))

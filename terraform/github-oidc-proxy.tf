@@ -1,32 +1,3 @@
-locals {
-  service_name = "github-oidc-proxy"
-  apigw_stage_name = "main"
-  api_name = "github-oidc-proxy-${var.environment_name}"
-
-  handler_names = toset([
-    "token",
-    "authorize",
-    "userinfo",
-    "jwks",
-    "openIdConfiguration",
-  ])
-
-  default_tags = {
-    ManagedBy   = "terraform"
-    Source      = "github.com/alphagov/github-oidc-proxy"
-    Environment = var.environment_name
-    Service     = local.service_name
-  }
-
-  lambda_environment_variables = {
-    GITHUB_CLIENT_SECRET = var.GITHUB_CLIENT_SECRET
-    GITHUB_CLIENT_ID = var.GITHUB_CLIENT_ID
-    COGNITO_REDIRECT_URI = var.COGNITO_REDIRECT_URI
-    GITHUB_API_URL = var.GITHUB_API_URL
-    GITHUB_LOGIN_URL = var.GITHUB_LOGIN_URL
-  }
-}
-
 resource "aws_api_gateway_rest_api" "github_oidc_proxy" {
   name = local.api_name
   body = jsonencode({
