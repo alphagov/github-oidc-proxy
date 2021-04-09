@@ -44,41 +44,7 @@ jobs:
       TERRAFORM_STATE_REGION: ((staging-terraform-state-region))
       ENVIRONMENT_NAME: staging((meta-suffix))
       DEPLOYER_ROLE_ARN: ((staging-deployer-role-arn))
-    config:
-      platform: linux
-      image_resource:
-        type: registry-image
-        source:
-          repository: governmentpaas/terraform
-          tag: sha256:4db24e98d6585ba2466c47f502f346b843db17b83d49303ce0cfb93c54a5a11f  # terraform 0.14.4
-      inputs:
-      - name: github-oidc-proxy-git
-      outputs:
-      - name: terraform-outputs
-      params:
-        TERRAFORM_STATE_BUCKET:
-        TERRAFORM_STATE_REGION:
-        ENVIRONMENT_NAME:
-        DEPLOYER_ROLE_ARN:
-      run:
-        dir: github-oidc-proxy-git/terraform
-        path: /bin/ash
-        args:
-          - -e
-          - -c
-          - |
-            export TF_VAR_deployer_role_arn="${DEPLOYER_ROLE_ARN}"
-            export TF_VAR_environment_name="${ENVIRONMENT_NAME}"
-
-            terraform init -input=false \
-              -backend-config "bucket=${TERRAFORM_STATE_BUCKET}" \
-              -backend-config "key=github-oidc-proxy-${ENVIRONMENT_NAME}.tfstate" \
-              -backend-config "region=${TERRAFORM_STATE_REGION}" \
-              -backend-config "role_arn=${DEPLOYER_ROLE_ARN}" \
-
-            terraform plan -out terraform.plan -input=false
-            terraform apply -auto-approve -input=false terraform.plan
-            terraform output -json > ../../terraform-outputs/outputs.json
+    file: github-oidc-proxy-git/ci/tasks/terraform.yml
   - task: smoke-test
     params:
       GITHUB_CLIENT_ID: ((staging-github-client-id))
