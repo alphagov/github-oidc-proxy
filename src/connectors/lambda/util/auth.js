@@ -4,7 +4,7 @@ module.exports = {
   getBearerToken: req =>
     new Promise((resolve, reject) => {
       // This method implements https://tools.ietf.org/html/rfc6750
-      const authHeader = req.headers.Authorization;
+      const authHeader = req.headers.Authorization || req.headers.authorization;
       logger.debug('Detected authorization header %s', authHeader);
       if (authHeader) {
         // Section 2.1 Authorization request header
@@ -22,8 +22,9 @@ module.exports = {
         );
         resolve(req.queryStringParameters.access_token);
       } else if (
-        req.headers['Content-Type'] === 'application/x-www-form-urlencoded' &&
-        req.body
+        (req.headers['Content-Type'] || req.headers['content-type'])
+          === 'application/x-www-form-urlencoded'
+        && req.body
       ) {
         // Section 2.2 form encoded body parameter
         const body = JSON.parse(req.body);

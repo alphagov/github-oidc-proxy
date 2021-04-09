@@ -4,8 +4,8 @@ const auth = require('./util/auth');
 const controllers = require('../controllers');
 
 const parseBody = event => {
-  const contentType = event.headers['Content-Type'];
-  if (event.body) {
+  const contentType = event.headers['Content-Type'] || event.headers['content-type'];
+  if (event.body && contentType) {
     if (contentType.startsWith('application/x-www-form-urlencoded')) {
       return qs.parse(event.body);
     }
@@ -27,7 +27,7 @@ module.exports.handler = (event, context, callback) => {
     code,
     state,
     auth.getIssuer(
-      event.headers.Host,
+      event.headers.Host || event.headers.host,
       event.requestContext && event.requestContext.stage
     )
   );
