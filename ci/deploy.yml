@@ -50,3 +50,27 @@ jobs:
       GITHUB_CLIENT_ID: ((staging-github-client-id))
     file: github-oidc-proxy-git/ci/tasks/smoke-test.yml
 
+- name: deploy-production
+  serial: true
+  plan:
+  - get: github-oidc-proxy-git
+    trigger: true
+    passed: [deploy-staging]
+  - task: build-dist
+    params:
+      JWKS_PUBLIC_KEY: ((production-jwks-public-key))
+      JWKS_PRIVATE_KEY: ((production-jwks-private-key))
+    file: github-oidc-proxy-git/ci/tasks/build-dist.yml
+  - task: apply-terraform
+    params:
+      TF_VAR_GITHUB_CLIENT_ID: ((production-github-client-id))
+      TF_VAR_GITHUB_CLIENT_SECRET: ((production-github-client-secret))
+      TERRAFORM_STATE_BUCKET: ((production-terraform-state-bucket))
+      TERRAFORM_STATE_REGION: ((production-terraform-state-region))
+      ENVIRONMENT_NAME: production((meta-suffix))
+      DEPLOYER_ROLE_ARN: ((production-deployer-role-arn))
+    file: github-oidc-proxy-git/ci/tasks/terraform.yml
+  - task: smoke-test
+    params:
+      GITHUB_CLIENT_ID: ((production-github-client-id))
+    file: github-oidc-proxy-git/ci/tasks/smoke-test.yml
