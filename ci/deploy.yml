@@ -54,6 +54,7 @@ jobs:
     params:
       GITHUB_CLIENT_ID: ((staging-github-client-id))
     file: github-oidc-proxy-git/ci/tasks/smoke-test.yml
+    attempts: 6
 
 - name: deploy-production
   serial: true
@@ -84,3 +85,4 @@ jobs:
     params:
       GITHUB_CLIENT_ID: ((production-github-client-id))
     file: github-oidc-proxy-git/ci/tasks/smoke-test.yml
+    attempts: 6
