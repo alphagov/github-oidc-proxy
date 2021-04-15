@@ -1,3 +1,8 @@
 github-oidc-proxy-git-branch: master
+github-oidc-proxy-git-uri: git@github.com:alphagov/github-oidc-proxy.git
+allowed-ips-git-branch: master
+allowed-ips-git-uri: git@github.com:alphagov/tech-ops-private.git
+allowed-ips-git-tf-module-path: reliability-engineering/terraform/modules/gds-ips
+allowed-ips-git-tf-output-name: gds_cidr_blocks
 background-image: ""
 meta-suffix: ""

@@ -6,6 +6,8 @@ image_resource:
     tag: sha256:4db24e98d6585ba2466c47f502f346b843db17b83d49303ce0cfb93c54a5a11f  # terraform 0.14.4
 inputs:
 - name: github-oidc-proxy-git
+- name: allowed-ips-git
+  optional: true
 outputs:
 - name: terraform-outputs
 params:
@@ -13,6 +15,7 @@ params:
   TERRAFORM_STATE_REGION:
   ENVIRONMENT_NAME:
   DEPLOYER_ROLE_ARN:
+  ALLOWED_IPS_TF_MODULE_PATH:
 run:
   dir: github-oidc-proxy-git/terraform
   path: /bin/ash
@@ -22,6 +25,13 @@ run:
     - |
       export TF_VAR_deployer_role_arn="${DEPLOYER_ROLE_ARN}"
       export TF_VAR_environment_name="${ENVIRONMENT_NAME}"
+
+      ALLOWED_IPS_TARGET="../../allowed-ips-git/${ALLOWED_IPS_TF_MODULE_PATH}"
+      if [ -e $ALLOWED_IPS_TARGET ] ; then
+        echo "Symlinking allowed-ips module..."
+        rm -r ./modules/allowed-ips
+        ln -s "../${ALLOWED_IPS_TARGET}" ./modules/allowed-ips
+      fi
 
       terraform init -input=false \
         -backend-config "bucket=${TERRAFORM_STATE_BUCKET}" \

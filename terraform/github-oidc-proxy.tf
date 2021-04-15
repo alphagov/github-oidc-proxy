@@ -82,7 +82,10 @@ resource "aws_api_gateway_deployment" "current" {
   rest_api_id = aws_api_gateway_rest_api.github_oidc_proxy.id
 
   triggers = {
-    redeployment = sha1(jsonencode(aws_api_gateway_rest_api.github_oidc_proxy.body))
+    api_config = jsonencode(aws_api_gateway_rest_api.github_oidc_proxy.body)
+    allowed_ips_policies = jsonencode(
+      { for k, v in aws_api_gateway_rest_api_policy.allowed_ips : k => jsonencode(jsondecode(v.policy)) }
+    )
   }
 
   lifecycle {
