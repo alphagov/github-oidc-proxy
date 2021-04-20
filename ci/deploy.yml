@@ -35,118 +35,54 @@ jobs:
     params:
       JWKS_PUBLIC_KEY: ((staging-jwks-public-key))
       JWKS_PRIVATE_KEY: ((staging-jwks-private-key))
-    config:
-      platform: linux
-      image_resource:
-        type: registry-image
-        source:
-          repository: node
-          tag: 10-alpine
-      inputs:
-      - name: github-oidc-proxy-git
-      outputs:
-      - name: github-oidc-proxy-git
-      run:
-        dir: github-oidc-proxy-git
-        path: /bin/ash
-        args:
-          - -e
-          - -c
-          - |
-            echo "$JWKS_PRIVATE_KEY" > jwtRS256.key
-            echo "$JWKS_PUBLIC_KEY" > jwtRS256.key.pub
-
-            npm install
-            npm run build
+    file: github-oidc-proxy-git/ci/tasks/build-dist.yml
   - task: apply-terraform
     params:
       TF_VAR_GITHUB_CLIENT_ID: ((staging-github-client-id))
       TF_VAR_GITHUB_CLIENT_SECRET: ((staging-github-client-secret))
+      TF_VAR_domain_root_zone_tfstate_s3_region: ((staging-domain-root-zone-tfstate-s3-region))
+      TF_VAR_domain_root_zone_tfstate_s3_bucket: ((staging-domain-root-zone-tfstate-s3-bucket))
+      TF_VAR_domain_root_zone_tfstate_s3_key: ((staging-domain-root-zone-tfstate-s3-key))
+      TF_VAR_domain_root_zone_tfstate_id_output_name: ((staging-domain-root-zone-tfstate-id-output-name))
+      TF_VAR_domain_subdomain: ((staging-domain-subdomain))
       TERRAFORM_STATE_BUCKET: ((staging-terraform-state-bucket))
       TERRAFORM_STATE_REGION: ((staging-terraform-state-region))
       ENVIRONMENT_NAME: staging((meta-suffix))
       DEPLOYER_ROLE_ARN: ((staging-deployer-role-arn))
-    config:
-      platform: linux
-      image_resource:
-        type: registry-image
-        source:
-          repository: governmentpaas/terraform
-          tag: sha256:4db24e98d6585ba2466c47f502f346b843db17b83d49303ce0cfb93c54a5a11f  # terraform 0.14.4
-      inputs:
-      - name: github-oidc-proxy-git
-      outputs:
-      - name: terraform-outputs
-      params:
-        TERRAFORM_STATE_BUCKET:
-        TERRAFORM_STATE_REGION:
-        ENVIRONMENT_NAME:
-        DEPLOYER_ROLE_ARN:
-      run:
-        dir: github-oidc-proxy-git/terraform
-        path: /bin/ash
-        args:
-          - -e
-          - -c
-          - |
-            export TF_VAR_deployer_role_arn="${DEPLOYER_ROLE_ARN}"
-            export TF_VAR_environment_name="${ENVIRONMENT_NAME}"
-
-            terraform init -input=false \
-              -backend-config "bucket=${TERRAFORM_STATE_BUCKET}" \
-              -backend-config "key=github-oidc-proxy-${ENVIRONMENT_NAME}.tfstate" \
-              -backend-config "region=${TERRAFORM_STATE_REGION}" \
-              -backend-config "role_arn=${DEPLOYER_ROLE_ARN}" \
-
-            terraform plan -out terraform.plan -input=false
-            terraform apply -auto-approve -input=false terraform.plan
-            terraform output -json > ../../terraform-outputs/outputs.json
+    file: github-oidc-proxy-git/ci/tasks/terraform.yml
   - task: smoke-test
     params:
       GITHUB_CLIENT_ID: ((staging-github-client-id))
-    config:
-      platform: linux
-      image_resource:
-        type: registry-image
-        source:
-          repository: govsvc/task-toolbox
-          tag: latest
-      inputs:
-      - name: github-oidc-proxy-git
-      - name: terraform-outputs
-      params:
-        GITHUB_CLIENT_ID:
-      run:
-        path: /bin/ash
-        args:
-          - -e
-          - -c
-          - |
-            test_for_substring () {
-              grep -F "$1" "$2" > /dev/null && echo "Found substring $1"
-            }
+    file: github-oidc-proxy-git/ci/tasks/smoke-test.yml
+    attempts: 6
 
-            export API_BASE_URL=$(jq -r '.api_base_url.value' terraform-outputs/outputs.json)
-            export OAUTH_STATE=$RANDOM$RANDOM
-
-            export TARGET_URL="$API_BASE_URL/authorize?client_id=$GITHUB_CLIENT_ID&state=$OAUTH_STATE&redirect_uri=http://localhost:1234/"
-            echo "Probing $TARGET_URL"
-            curl $TARGET_URL -f -w '%{redirect_url}' > redirect_url
-
-            echo "redirect_url: $(cat redirect_url)"
-
-            test_for_substring 'github.com' redirect_url
-            test_for_substring "state=$OAUTH_STATE" redirect_url
-            test_for_substring "client_id=$GITHUB_CLIENT_ID" redirect_url
-
-            export TARGET_URL="$API_BASE_URL/.well-known/jwks.json"
-            echo "Probing $TARGET_URL"
-            curl $TARGET_URL -f > jwks.json
-            jq -e '(.keys | length) >= 1' jwks.json > /dev/null \
-              && echo "Found populated 'keys' array"
-
-            export TARGET_URL="$API_BASE_URL/.well-known/openid-configuration"
-            echo "Probing $TARGET_URL"
-            curl $TARGET_URL -f > openid-configuration.json
-            jq -e '.issuer == env.API_BASE_URL' openid-configuration.json > /dev/null \
-              && echo "Found correct 'issuer'"
+- name: deploy-production
+  serial: true
+  plan:
+  - get: github-oidc-proxy-git
+    trigger: true
+    passed: [deploy-staging]
+  - task: build-dist
+    params:
+      JWKS_PUBLIC_KEY: ((production-jwks-public-key))
+      JWKS_PRIVATE_KEY: ((production-jwks-private-key))
+    file: github-oidc-proxy-git/ci/tasks/build-dist.yml
+  - task: apply-terraform
+    params:
+      TF_VAR_GITHUB_CLIENT_ID: ((production-github-client-id))
+      TF_VAR_GITHUB_CLIENT_SECRET: ((production-github-client-secret))
+      TF_VAR_domain_root_zone_tfstate_s3_region: ((production-domain-root-zone-tfstate-s3-region))
+      TF_VAR_domain_root_zone_tfstate_s3_bucket: ((production-domain-root-zone-tfstate-s3-bucket))
+      TF_VAR_domain_root_zone_tfstate_s3_key: ((production-domain-root-zone-tfstate-s3-key))
+      TF_VAR_domain_root_zone_tfstate_id_output_name: ((production-domain-root-zone-tfstate-id-output-name))
+      TF_VAR_domain_subdomain: ((production-domain-subdomain))
+      TERRAFORM_STATE_BUCKET: ((production-terraform-state-bucket))
+      TERRAFORM_STATE_REGION: ((production-terraform-state-region))
+      ENVIRONMENT_NAME: production((meta-suffix))
+      DEPLOYER_ROLE_ARN: ((production-deployer-role-arn))
+    file: github-oidc-proxy-git/ci/tasks/terraform.yml
+  - task: smoke-test
+    params:
+      GITHUB_CLIENT_ID: ((production-github-client-id))
+    file: github-oidc-proxy-git/ci/tasks/smoke-test.yml
+    attempts: 6

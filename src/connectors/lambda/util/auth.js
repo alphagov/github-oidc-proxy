@@ -1,4 +1,5 @@
 const logger = require('../../logger');
+const { OIDC_ISSUER_OMIT_STAGE } = require('../../../config');
 
 module.exports = {
   getBearerToken: req =>
@@ -38,8 +39,6 @@ module.exports = {
     }),
 
   getIssuer: (host, stage) => {
-    const lStage = stage;
-    const issuer = `${host}/${lStage}`;
-    return issuer;
+    return `${host}` + (OIDC_ISSUER_OMIT_STAGE ? "" : `/${lStage}`);
   }
 };

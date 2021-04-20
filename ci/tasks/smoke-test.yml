@@ -1,0 +1,61 @@
+platform: linux
+image_resource:
+  type: registry-image
+  source:
+    repository: govsvc/task-toolbox
+    tag: latest
+inputs:
+- name: github-oidc-proxy-git
+- name: terraform-outputs
+params:
+  GITHUB_CLIENT_ID:
+run:
+  path: /bin/ash
+  args:
+    - -e
+    - -c
+    - |
+      test_for_substring () {
+        grep -F "$1" "$2" > /dev/null || (echo "Missing substring $1" && false)
+      }
+
+      export API_BASE_URL=$(jq -r '.api_base_url.value' terraform-outputs/outputs.json)
+      export OAUTH_STATE=$RANDOM$RANDOM
+
+      export TARGET_URL="$API_BASE_URL/authorize?client_id=$GITHUB_CLIENT_ID&state=$OAUTH_STATE&redirect_uri=http://localhost:1234/"
+      echo "Probing $TARGET_URL"
+      curl $TARGET_URL -f -w '%{redirect_url}' > redirect_url
+
+      echo "redirect_url: $(cat redirect_url)"
+
+      test_for_substring 'github.com' redirect_url
+      test_for_substring "state=$OAUTH_STATE" redirect_url
+      test_for_substring "client_id=$GITHUB_CLIENT_ID" redirect_url
+
+      export TARGET_URL="$API_BASE_URL/.well-known/jwks.json"
+      echo "Probing $TARGET_URL"
+      curl $TARGET_URL -f > jwks.json
+      jq -e '(.keys | length) >= 1' jwks.json > /dev/null \
+        || (echo "Missing populated 'keys' array" && false)
+
+      export TARGET_URL="$API_BASE_URL/.well-known/openid-configuration"
+      echo "Probing $TARGET_URL"
+      curl $TARGET_URL -f > openid-configuration.json
+      jq -e '.issuer == env.API_BASE_URL' openid-configuration.json > /dev/null \
+        || (echo "Missing correct 'issuer'" && false)
+      jq -e '.claims_supported | contains(["https://aws.amazon.com/tags"])' openid-configuration.json > /dev/null \
+        || (echo "Missing session tags in 'claims_supported'" && false)
+
+      export TARGET_URL="$API_BASE_URL/token"
+      echo "Probing $TARGET_URL"
+      export TOKEN_STATUS_CODE=$(
+        curl $TARGET_URL -XPOST \
+          -d "client_id=$GITHUB_CLIENT_ID" \
+          -d "code=12341234" \
+          -d "state=$RANDOM" \
+          -o /dev/stderr \
+          --write-out '%{http_code}'
+      )
+      [ "$TOKEN_STATUS_CODE" == '400' ] || (
+        echo "Expected 400 status code, got '$TOKEN_STATUS_CODE'" && false
+      )

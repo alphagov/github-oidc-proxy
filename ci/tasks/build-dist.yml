@@ -1,0 +1,25 @@
+platform: linux
+image_resource:
+  type: registry-image
+  source:
+    repository: node
+    tag: 10-alpine
+inputs:
+- name: github-oidc-proxy-git
+outputs:
+- name: github-oidc-proxy-git
+params:
+  JWKS_PUBLIC_KEY:
+  JWKS_PRIVATE_KEY:
+run:
+  dir: github-oidc-proxy-git
+  path: /bin/ash
+  args:
+    - -e
+    - -c
+    - |
+      echo "$JWKS_PRIVATE_KEY" > jwtRS256.key
+      echo "$JWKS_PUBLIC_KEY" > jwtRS256.key.pub
+
+      npm install
+      npm run build
