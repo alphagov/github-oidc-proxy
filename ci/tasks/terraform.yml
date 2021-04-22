@@ -33,11 +33,16 @@ run:
         ln -s "../${ALLOWED_IPS_TARGET}" ./modules/allowed-ips
       fi
 
+      BACKEND_DEPLOYER_ROLE_ARN_ARG=''
+      if [ -n "$(echo $DEPLOYER_ROLE_ARN | tr -d '[:space:]')" ] ; then
+        BACKEND_DEPLOYER_ROLE_ARN_ARG="-backend-config=role_arn=${DEPLOYER_ROLE_ARN}"
+      fi
+
       terraform init -input=false \
         -backend-config "bucket=${TERRAFORM_STATE_BUCKET}" \
         -backend-config "key=github-oidc-proxy-${ENVIRONMENT_NAME}.tfstate" \
         -backend-config "region=${TERRAFORM_STATE_REGION}" \
-        -backend-config "role_arn=${DEPLOYER_ROLE_ARN}" \
+        $BACKEND_DEPLOYER_ROLE_ARN_ARG
 
       terraform plan -out terraform.plan -input=false
       terraform apply -auto-approve -input=false terraform.plan

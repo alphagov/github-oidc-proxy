@@ -3,6 +3,8 @@ locals {
   apigw_stage_name = "main"
   api_name = "${local.service_name}-${var.environment_name}"
 
+  deployer_role_arn = trimspace(var.deployer_role_arn) != "" ? var.deployer_role_arn : null
+
   handler_names = toset([
     "token",
     "authorize",
