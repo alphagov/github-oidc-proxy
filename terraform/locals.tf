@@ -41,4 +41,25 @@ locals {
       subdomain = trimspace(var.domain_subdomain) != "" ? var.domain_subdomain : "${local.service_name}-${var.environment_name}"
     }
   } : {}
+
+  allowed_ips_tf_modules = trimspace(var.allowed_ips_tf_module_output_name) != "" ? {
+    main = {
+      tf_module_output_name = var.allowed_ips_tf_module_output_name
+    }
+  } : {}
+
+  # if this somehow becomes a single-item list, you will likely run into
+  # https://github.com/hashicorp/terraform-provider-aws/issues/17341
+  allowed_ips_final_list = concat(
+    flatten([
+      for k, v in local.allowed_ips_tf_modules : module.allowed_ips[k][v.tf_module_output_name]
+    ]),
+    trimspace(var.allowed_ips) != "" ? split(",", var.allowed_ips) : [],
+  )
+
+  allowed_ips_policies = local.allowed_ips_final_list != [] ? {
+    main = {
+      final_ip_list = local.allowed_ips_final_list
+    }
+  } : {}
 }

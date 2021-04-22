@@ -1,5 +1,5 @@
 variable "environment_name" {
-  default = "frank"
+  default = "dev"
 }
 
 variable "deployer_role_arn" {
@@ -23,6 +23,14 @@ variable "domain_root_zone_tfstate_id_output_name" {
 }
 
 variable "domain_subdomain" {
+  default = ""
+}
+
+variable "allowed_ips_tf_module_output_name" {
+  default = ""
+}
+
+variable "allowed_ips" {
   default = ""
 }
 

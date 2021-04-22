@@ -1,0 +1,2 @@
+Replace this directory with a symlink to a real allowed-ips module if desired.
+(This is a workaround for terraform not supporting variables in module paths)
