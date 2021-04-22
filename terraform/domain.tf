@@ -7,7 +7,7 @@ data "terraform_remote_state" "domain_root_zone" {
     region = each.value.root_zone_tfstate_s3_region
     bucket = each.value.root_zone_tfstate_s3_bucket
     key = each.value.root_zone_tfstate_s3_key
-    role_arn = var.deployer_role_arn
+    role_arn = local.deployer_role_arn_nullable
   }
 }
 

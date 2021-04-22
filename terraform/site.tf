@@ -18,6 +18,6 @@ terraform {
 provider "aws" {
   region = "eu-west-2"
   assume_role {
-    role_arn = var.deployer_role_arn
+    role_arn = local.deployer_role_arn_nullable
   }
 }
