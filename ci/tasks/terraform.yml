@@ -23,8 +23,8 @@ run:
     - -e
     - -c
     - |
-      export TF_VAR_deployer_role_arn="${DEPLOYER_ROLE_ARN}"
-      export TF_VAR_environment_name=" "
+      export TF_VAR_deployer_role_arn=" "
+      export TF_VAR_environment_name="${ENVIRONMENT_NAME}"
 
       ALLOWED_IPS_TARGET="../../allowed-ips-git/${ALLOWED_IPS_TF_MODULE_PATH}"
       if [ -e $ALLOWED_IPS_TARGET ] ; then
