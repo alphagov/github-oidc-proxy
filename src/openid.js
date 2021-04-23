@@ -102,6 +102,7 @@ const getTokens = (code, state, host) =>
         const payload = await getUserInfo(githubToken.access_token);
 
         const idToken = crypto.makeIdToken(payload, host);
+        logger.info('Generated id token for subject %s', payload.sub, {});
         const tokenResponse = {
           ...githubToken,
           scope,

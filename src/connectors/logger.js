@@ -18,8 +18,8 @@ if (SPLUNK_URL) {
   const splunkSettings = {
     url: SPLUNK_URL || 'localhost',
     token: SPLUNK_TOKEN,
-    source: SPLUNK_SOURCE || '/var/log/GHOIdShim.log',
-    sourcetype: SPLUNK_SOURCETYPE || 'github-cognito-openid-wrapper',
+    source: SPLUNK_SOURCE || '/var/log/github-oidc-proxy.log',
+    sourcetype: SPLUNK_SOURCETYPE || 'github-oidc-proxy',
     index: SPLUNK_INDEX || 'main',
     maxBatchCount: 1
   };
