@@ -84,7 +84,7 @@ jobs:
       passed: [deploy-staging]
     - get: allowed-ips-git
       trigger: false
-      passed: [deploy-staging]
+      # passed: [deploy-staging]
   - task: build-dist
     params:
       JWKS_PUBLIC_KEY: ((production-jwks-public-key))
