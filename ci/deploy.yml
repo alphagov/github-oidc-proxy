@@ -45,8 +45,8 @@ jobs:
     - get: github-oidc-proxy-git
       trigger: true
       passed: [update-pipeline]
-    - get: allowed-ips-git
-      trigger: false
+    # - get: allowed-ips-git
+     # trigger: false
   - task: build-dist
     params:
       JWKS_PUBLIC_KEY: ((staging-jwks-public-key))
@@ -61,9 +61,9 @@ jobs:
       TF_VAR_domain_root_zone_tfstate_s3_key: ((staging-domain-root-zone-tfstate-s3-key))
       TF_VAR_domain_root_zone_tfstate_id_output_name: ((staging-domain-root-zone-tfstate-id-output-name))
       TF_VAR_domain_subdomain: ((staging-domain-subdomain))
-      TF_VAR_allowed_ips: ((readonly_egress_ips))
-      TF_VAR_allowed_ips_tf_module_output_name: ((allowed-ips-git-tf-output-name))
-      ALLOWED_IPS_TF_MODULE_PATH: ((allowed-ips-git-tf-module-path))
+      # TF_VAR_allowed_ips: ((readonly_egress_ips))
+      # TF_VAR_allowed_ips_tf_module_output_name: ((allowed-ips-git-tf-output-name))
+      # ALLOWED_IPS_TF_MODULE_PATH: ((allowed-ips-git-tf-module-path))
       TERRAFORM_STATE_BUCKET: ((staging-terraform-state-bucket))
       TERRAFORM_STATE_REGION: ((staging-terraform-state-region))
       ENVIRONMENT_NAME: staging((meta-suffix))
