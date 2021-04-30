@@ -152,7 +152,7 @@ resource "aws_lambda_function" "handler" {
   role = aws_iam_role.basic_lambda_role.arn
   publish = true
 
-  runtime = "nodejs10.x"
+  runtime = "nodejs14.x"
   timeout = 15
 
   handler = "${each.key}.handler"
