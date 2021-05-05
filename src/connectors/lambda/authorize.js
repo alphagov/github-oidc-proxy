@@ -1,9 +1,10 @@
 const responder = require('./util/responder');
 const controllers = require('../controllers');
 
+const { GITHUB_CLIENT_ID } = require('../../config');
+
 module.exports.handler = (event, context, callback) => {
   const {
-    client_id,
     scope,
     state,
     response_type,
@@ -11,7 +12,7 @@ module.exports.handler = (event, context, callback) => {
   } = event.queryStringParameters;
 
   controllers(responder(callback)).authorize(
-    client_id,
+    GITHUB_CLIENT_ID,
     scope,
     state,
     response_type,
