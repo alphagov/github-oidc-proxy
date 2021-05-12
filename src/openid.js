@@ -60,12 +60,7 @@ const getUserInfo = accessToken =>
               obj[`t${id}`] = ["t"];  // `t` for "true" as we can only have str values
               return obj;
             } , {
-                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": ["t"],
-                "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc": ["t"],
-                "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": ["t"],
-                "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg": ["t"],
-                "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii": ["t"],
-                "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk": ["t"]
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": ["t"]
             })
           }
         };
