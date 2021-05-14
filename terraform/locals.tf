@@ -23,7 +23,8 @@ locals {
   lambda_environment_variables = {
     GITHUB_CLIENT_SECRET = var.GITHUB_CLIENT_SECRET
     GITHUB_CLIENT_ID = var.GITHUB_CLIENT_ID
-    COGNITO_REDIRECT_URI = var.COGNITO_REDIRECT_URI
+    REDIRECT_URI = var.REDIRECT_URI
+    COGNITO_REDIRECT_URI = var.REDIRECT_URI  # deprecated alias
     GITHUB_API_URL = var.GITHUB_API_URL
     GITHUB_LOGIN_URL = var.GITHUB_LOGIN_URL
     OIDC_ISSUER_OMIT_STAGE = jsonencode(contains(keys(local.domains), "main"))

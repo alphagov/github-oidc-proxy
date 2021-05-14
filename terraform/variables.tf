@@ -44,7 +44,7 @@ variable "GITHUB_CLIENT_ID" {
   type = string
   sensitive = true
 }
-variable "COGNITO_REDIRECT_URI" {
+variable "REDIRECT_URI" {
   default = "http://localhost:1234"
 }
 variable "GITHUB_API_URL" {
