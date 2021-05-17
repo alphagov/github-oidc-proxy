@@ -5,10 +5,11 @@ image_resource:
     repository: govsvc/task-toolbox
     tag: latest
 inputs:
-- name: github-oidc-proxy-git
 - name: terraform-outputs
+  optional: true
 params:
   GITHUB_CLIENT_ID:
+  API_BASE_URL:
 run:
   path: /bin/ash
   args:
@@ -19,7 +20,11 @@ run:
         grep -F "$1" "$2" > /dev/null || (echo "Missing substring $1" && false)
       }
 
-      export API_BASE_URL=$(jq -r '.api_base_url.value' terraform-outputs/outputs.json)
+      if [ -e terraform-outputs/outputs.json ] ; then
+        if [ -z "$API_BASE_URL"] ; then
+          export API_BASE_URL=$(jq -r '.api_base_url.value' terraform-outputs/outputs.json)
+        fi
+      fi
       export OAUTH_STATE=$RANDOM$RANDOM
 
       export TARGET_URL="$API_BASE_URL/authorize?state=$OAUTH_STATE&redirect_uri=http://localhost:1234/"
