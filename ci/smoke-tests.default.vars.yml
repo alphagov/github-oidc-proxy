@@ -1,0 +1,3 @@
+github-oidc-proxy-git-branch: master
+github-oidc-proxy-git-uri: git@github.com:alphagov/github-oidc-proxy.git
+background-image: "https://raw.githubusercontent.com/alphagov/github-oidc-proxy/master/github-oidc-proxy-smoke.plain.svg
