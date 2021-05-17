@@ -3,7 +3,7 @@ const github = require('./github');
 /* global provider PACT_BASE_URL */
 
 jest.mock('./config', () => ({
-  COGNITO_REDIRECT_URI: 'COGNITO_REDIRECT_URI',
+  REDIRECT_URI: 'REDIRECT_URI',
   GITHUB_CLIENT_SECRET: 'GITHUB_CLIENT_SECRET',
   GITHUB_CLIENT_ID: 'GITHUB_CLIENT_ID',
   GITHUB_API_URL: 'GITHUB_API_URL',
@@ -356,7 +356,7 @@ describe('With an increased jasmine timeout', () => {
           body: {
             // OAuth required fields
             grant_type: 'authorization_code',
-            redirect_uri: 'COGNITO_REDIRECT_URI',
+            redirect_uri: 'REDIRECT_URI',
             client_id: 'GITHUB_CLIENT_ID',
             // GitHub Specific
             response_type: 'code',

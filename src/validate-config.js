@@ -19,7 +19,7 @@ const ensureNumber = variableName => {
 const requiredStrings = [
   'GITHUB_CLIENT_ID',
   'GITHUB_CLIENT_SECRET',
-  'COGNITO_REDIRECT_URI'
+  'REDIRECT_URI'
 ];
 
 const requiredNumbers = ['PORT'];
