@@ -22,7 +22,7 @@ run:
       export API_BASE_URL=$(jq -r '.api_base_url.value' terraform-outputs/outputs.json)
       export OAUTH_STATE=$RANDOM$RANDOM
 
-      export TARGET_URL="$API_BASE_URL/authorize?client_id=$GITHUB_CLIENT_ID&state=$OAUTH_STATE&redirect_uri=http://localhost:1234/"
+      export TARGET_URL="$API_BASE_URL/authorize?state=$OAUTH_STATE&redirect_uri=http://localhost:1234/"
       echo "Probing $TARGET_URL"
       curl $TARGET_URL -f -w '%{redirect_url}' > redirect_url
 
@@ -50,7 +50,6 @@ run:
       echo "Probing $TARGET_URL"
       export TOKEN_STATUS_CODE=$(
         curl $TARGET_URL -XPOST \
-          -d "client_id=$GITHUB_CLIENT_ID" \
           -d "code=12341234" \
           -d "state=$RANDOM" \
           -o /dev/stderr \
