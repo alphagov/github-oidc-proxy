@@ -1,0 +1,47 @@
+display:
+  background_image: ((background-image))
+
+resources:
+
+- name: github-oidc-proxy-git
+  icon: github
+  type: git
+  source:
+    branch: ((github-oidc-proxy-git-branch))
+    uri: ((github-oidc-proxy-git-uri))
+    private_key: ((github-oidc-proxy-git-ssh-private-key))
+
+- name: every-10-minutes
+  type: time
+  icon: timer-outline
+  source:
+    interval: 10m
+
+jobs:
+
+- name: update-pipeline
+  serial: true
+  plan:
+  - get: github-oidc-proxy-git
+    trigger: true
+  - set_pipeline: self
+    file: github-oidc-proxy-git/ci/smoke-tests.yml
+    vars:
+      github-oidc-proxy-git-branch: ((github-oidc-proxy-git-branch))
+      github-oidc-proxy-git-uri: ((github-oidc-proxy-git-uri))
+      background-image: ((background-image))
+
+- name: run-smoke-test
+  serial: true
+  plan:
+  - in_parallel:
+    - get: github-oidc-proxy-git
+      trigger: true
+      passed: [update-pipeline]
+    - get: every-10-minutes
+      trigger: true
+  - task: smoke-test
+    params:
+      GITHUB_CLIENT_ID: ((github-client-id))
+      API_BASE_URL: ((api-base-url))
+    file: github-oidc-proxy-git/ci/tasks/smoke-test.yml
