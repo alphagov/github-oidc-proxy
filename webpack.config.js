@@ -41,19 +41,6 @@ const config = [
       jwks: './src/connectors/lambda/jwks.js',
       authorize: './src/connectors/lambda/authorize.js'
     }
-  },
-  {
-    ...baseConfig,
-    output: {
-      libraryTarget: 'commonjs2',
-      path: `${__dirname}/dist-web`,
-      filename: '[name].js'
-    },
-    entry: {
-      server: './src/connectors/web/app.js'
-    },
-    externals: [nodeExternals()],
-    plugins: [new NodemonPlugin()]
   }
 ];
 
