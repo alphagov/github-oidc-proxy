@@ -1,6 +1,14 @@
 display:
   background_image: ((background-image))
 
+resource_types:
+
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+    tag: latest
+
 resources:
 
 - name: github-oidc-proxy-git
@@ -11,11 +19,17 @@ resources:
     uri: ((github-oidc-proxy-git-uri))
     private_key: ((github-oidc-proxy-git-ssh-private-key))
 
-- name: every-10-minutes
+- name: every-15-minutes
   type: time
   icon: timer-outline
   source:
-    interval: 10m
+    interval: 15m
+
+- name: slack-alert
+  type: slack-notification
+  icon: slack
+  source:
+    url: ((slack-webhook-url))
 
 jobs:
 
@@ -38,10 +52,19 @@ jobs:
     - get: github-oidc-proxy-git
       trigger: true
       passed: [update-pipeline]
-    - get: every-10-minutes
+    - get: every-15-minutes
       trigger: true
   - task: smoke-test
     params:
       GITHUB_CLIENT_ID: ((github-client-id))
       API_BASE_URL: ((api-base-url))
     file: github-oidc-proxy-git/ci/tasks/smoke-test.yml
+    on_failure:
+      put: slack-alert
+      params:
+        text: |
+          `github-oidc-proxy` instance @ ((api-base-url)) failed a smoke test.
+          (build *$BUILD_NAME* of job `$BUILD_JOB_NAME` in pipeline `$BUILD_PIPELINE_NAME`)
+          <$ATC_EXTERNAL_URL/builds/$BUILD_ID|:warning: View build log>
+        silent: true
+        icon-emoji: ":oidc:"
