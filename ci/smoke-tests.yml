@@ -19,11 +19,11 @@ resources:
     uri: ((github-oidc-proxy-git-uri))
     private_key: ((github-oidc-proxy-git-ssh-private-key))
 
-- name: every-10-minutes
+- name: every-15-minutes
   type: time
   icon: timer-outline
   source:
-    interval: 10m
+    interval: 15m
 
 - name: slack-alert
   type: slack-notification
@@ -52,7 +52,7 @@ jobs:
     - get: github-oidc-proxy-git
       trigger: true
       passed: [update-pipeline]
-    - get: every-10-minutes
+    - get: every-15-minutes
       trigger: true
   - task: smoke-test
     params:
