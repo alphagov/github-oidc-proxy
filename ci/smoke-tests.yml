@@ -6,8 +6,8 @@ resource_types:
 - name: slack-notification
   type: docker-image
   source:
-    repository: cfcommunity/slack-notification-resource
-    tag: latest
+    repository: ghcr.io/alphagov/slack-notification-resource
+    tag: 1.6.0
 
 resources:
 
