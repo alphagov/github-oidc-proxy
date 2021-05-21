@@ -167,3 +167,10 @@ resource "aws_lambda_function" "handler" {
   tags = local.default_tags
 }
 
+resource "aws_cloudwatch_log_group" "lambdas" {
+  for_each = toset([
+    for k, l in aws_lambda_function.handler: l.function_name
+  ])
+
+  name = "/aws/lambda/${each.key}"
+}
