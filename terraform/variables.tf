@@ -34,6 +34,10 @@ variable "allowed_ips" {
   default = ""
 }
 
+variable "log_subscription_destination_arn" {
+  default = ""
+}
+
 # environment variables for the lambdas
 
 variable "GITHUB_CLIENT_SECRET" {
